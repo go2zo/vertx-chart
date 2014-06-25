@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Data Feeder</title>
+    <style>
+        table,th,td
+        {
+            border:1px solid black;
+            border-collapse:collapse;
+        }
+        th,td
+        {
+            padding:5px;
+        }
+        th
+        {
+            text-align:left;
+        }
+        tr.selected {
+            background-color: #d8da3d;
+        }
+    </style>
+    <script type="text/javascript">
+        window.onload = function() {
+
+            var selectedRow;
+
+            function SelectRow(row) {
+                var classname;
+                if (selectedRow !== undefined) {
+                    classname = selectedRow.className;
+                    classname = classname.replace("selected", "");
+                    classname = classname.replace("  ", " ");
+                    classname = classname.trim();
+                    selectedRow.className = classname;
+                }
+
+                if (row.rowIndex != 0) {
+                    selectedRow = row;
+                    classname = selectedRow.className;
+                    if (classname.length > 0) {
+                        classname += " ";
+                    }
+                    classname += "selected"
+                    selectedRow.className = classname;
+                }
+            }
+
+            var table = document.getElementById("dataset");
+            var rows = table.getElementsByClassName("selected");
+            for (var i = 0; i < rows.length; i++) {
+                rows[i].addEventListener("click", function() {
+                    SelectRow(this);
+                });
+            }
+
+            var addBtn = document.getElementById("addBtn");
+            addBtn.onclick = function() {
+                var table = document.getElementById("dataset");
+                var row = table.insertRow(-1);
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                cell1.innerHTML = "A";
+                cell1.setAttribute("contenteditable", "true");
+                var value = Math.random() * 100;
+                value = Math.round(value * 1000) / 1000;
+                cell2.innerHTML = value;
+                cell2.setAttribute("contenteditable", "true");
+
+                row.onclick = function() {
+                    SelectRow(this);
+                }
+            };
+
+            var delBtn = document.getElementById("delBtn");
+            delBtn.onclick = function() {
+                var table = document.getElementById("dataset");
+                var rows = table.getElementsByClassName("selected");
+//                if (rows !== undefined && rows.length > 0) {
+//                    for (var i = rows.length - 1; i >= 0; i--) {
+//                        table.deleteRow(rows[i].rowIndex);
+//                    }
+//                }
+                for (var row in rows) {
+                    table.deleteRow(row.rowIndex);
+                }
+            };
+
+            var sendBtn = document.getElementById("send");
+            sendBtn.onclick = function() {
+                var entryArray = [];
+
+                var table = document.getElementById("dataset");
+                var rows = table.getElementsByTagName("tr");
+                for (var row in rows) {
+                    var entry = new Object();
+                    entry.label = row.cells[0].textContent;
+                    entry.value = parseFloat(row.cells[1].textContent);
+                    entryArray.push(entry);
+                }
+
+                var myObject = new Object();
+                myObject.key = "Cumulative Return";
+                myObject.values = entryArray;
+
+                send([myObject]);
+            };
+        };
+    </script>
+    <script type="text/javascript">
+        var socket;
+        if (window.WebSocket) {
+            socket = new WebSocket("ws://localhost:8080/feeder");
+            socket.onopen = function(event) {
+                document.getElementById("sayhello").innerHTML = "<h1>Web Socket Opened!</h1>";
+            }
+            socket.onclose = function(event) {
+                document.getElementById("sayhello").innerHTML = "<h1>Web Socket closed.</h1>";
+            }
+        } else {
+            document.getElementById("sayhello").innerHTML = "<h1>Your browser does not support Websockets. (Use Chrome)</h1>";
+        }
+
+        function send(data) {
+            if (!window.WebSocket) {
+                return;
+            }
+            if (socket.readyState == WebSocket.OPEN) {
+//                var data = [
+//                    {
+//                        key: "Cumulative Return",
+//                        values: [
+//                            {
+//                                "label" : "A" ,
+//                                "value" : 0
+//                            } ,
+//                            {
+//                                "label" : "B" ,
+//                                "value" : -29.765957771107
+//                            } ,
+//                            {
+//                                "label" : "C" ,
+//                                "value" : 196.45946739256
+//                            } ,
+//                            {
+//                                "label" : "D" ,
+//                                "value" : 32.807804682612
+//                            } ,
+//                            {
+//                                "label" : "E" ,
+//                                "value" : -98.079782601442
+//                            } ,
+//                            {
+//                                "label" : "F" ,
+//                                "value" : 0.19434030906893
+//                            } ,
+//                            {
+//                                "label" : "G" ,
+//                                "value" : -5.1387322875705
+//                            } ,
+//                            {
+//                                "label" : "H" ,
+//                                "value" : -13.925743130903
+//                            }
+//                        ]
+//                    }
+//                ];
+                socket.send(JSON.stringify(data));
+            } else {
+                document.getElementById("sayhello").innerHTML = "<h1>The socket is not open.</h1>";
+            }
+        }
+    </script>
+</head>
+<body>
+<div id="sayhello"></div>
+<div>
+    <button id="send">보내기</button>
+</div>
+<div>
+    <button id="addBtn">추가</button>
+    <button id="delBtn">삭제</button>
+</div>
+<div>
+    <table id="dataset" style="width:300px">
+        <tr>
+            <th>rows</th>
+            <th>values</th>
+        </tr>
+        <tr>
+            <td contenteditable="true">A</td>
+            <td contenteditable="true">100.1</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
