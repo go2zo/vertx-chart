@@ -28,6 +28,13 @@ public class DataFeeder extends Verticle {
             @Override
             public void handle(final ServerWebSocket ws) {
                 if (ws.path().equals("/feeder")) {
+                    vertx.sharedData().getSet("conns").add(ws.textHandlerID());
+                    ws.closeHandler(new VoidHandler() {
+                        @Override
+                        protected void handle() {
+                            vertx.sharedData().getSet("conns").remove(ws.textHandlerID());
+                        }
+                    });
                     ws.dataHandler(new Handler<Buffer>() {
                         @Override
                         public void handle(Buffer buffer) {
@@ -35,15 +42,6 @@ public class DataFeeder extends Verticle {
                             for (String actorID : actorIDs) {
                                 vertx.eventBus().publish(actorID, buffer.toString());
                             }
-                        }
-                    });
-                } else if (ws.path().equals("/chart")) {
-                    Set<String> set = vertx.sharedData().getSet("conns");
-                    set.add(ws.textHandlerID());
-                    ws.closeHandler(new VoidHandler() {
-                        @Override
-                        protected void handle() {
-                            vertx.sharedData().getSet("conns").remove(ws.textHandlerID());
                         }
                     });
                 }

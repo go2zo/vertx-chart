@@ -17,21 +17,19 @@
     <script>
         var socket;
         if (window.WebSocket) {
-            socket = new WebSocket("ws://localhost:8080/chart");
+            socket = new WebSocket("ws://localhost:8080/feeder");
             socket.onmessage = function(event) {
                 var historicalBarChart = JSON.parse(event.data);
                 drawChart(historicalBarChart);
             }
-/*
             socket.onopen = function(event) {
-                alert("Web Socket opened!");
+                document.getElementById("sayhello").innerHTML = "<h1>Web Socket Opened!</h1>";
             }
             socket.onclose = function(event) {
-                alert("Web Socket closed.");
+                document.getElementById("sayhello").innerHTML = "<h1>Web Socket closed.</h1>";
             }
-*/
         } else {
-            alert("Your browser does not support Websockets. (Use Chrome)");
+            document.getElementById("sayhello").innerHTML = "<h1>Your browser does not support Websockets. (Use Chrome)</h1>";
         }
 
         function drawChart(data) {
@@ -41,7 +39,7 @@
                         .y(function(d) { return d.value })
                         .staggerLabels(true)
                         .tooltips(false)
-                        .showValues(true)
+                        .showValues(true);
 
                 d3.select('#chart svg')
                         .datum(data)
@@ -101,9 +99,7 @@
     </script>
 </head>
 <body>
-<div>
-    <h1>Hello Chart!!</h1>
-</div>
+<div id="sayhello"></div>
 <div id="chart">
     <svg></svg>
 </div>
